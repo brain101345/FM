@@ -94,18 +94,20 @@ void Partitioner::set_cutSize(){
     
 }
 void Partitioner::add_cell(int i){
+    cout<<i<<endl;
     map<int, Node*>::iterator itr;
-    Node node(i);
-    if(_cellArray[i]->getPart()){
+    Node* node = _cellArray[i]->getNode();
+    if(!_cellArray[i]->getPart()){
         int gain = _cellArray[i]->getGain();
         itr = _bList[0].find(gain);
         if(itr != _bList[0].end()){
-            _bList[0][gain] = &node;
+            _bList[0][gain] = node;
         }else{
-            (*itr).second->getNext()->setPrev(&node);
-            node.setNext((*itr).second->getNext());
-            (*itr).second->setNext(&node);
-            node.setPrev((*itr).second);
+            // (*itr).second->getNext()->setPrev(node);
+            // node->setNext((*itr).second->getNext());
+            // (*itr).second->setPrev(node);
+            // node->setNext((*itr).second);
+            _bList[0][gain] = node;
         }
         
     }
@@ -120,7 +122,7 @@ void Partitioner::init_gain(){
         _cellArray[i]->setGain(0);
         vector<int> netlist = _cellArray[i]->getNetList();
         //calculate gain
-        if(_cellArray[i]->getPart()){
+        if(!_cellArray[i]->getPart()){
             for(int j=0;j<netlist.size();j++){
                 if(_netArray[netlist[j]]->getPartCount(0)==1)
                     _cellArray[i]->incGain();
@@ -136,7 +138,7 @@ void Partitioner::init_gain(){
             }   
         }
         //add cell
-        // add_cell(i);
+        add_cell(i);
         std::cout<<_cellArray[i]->getName()<<" "<<_cellArray[i]->getGain()<<" "<<_cellArray[i]->getPinNum()<<" "<<_cellArray[i]->getPart()<<endl;
     }
 }
@@ -146,6 +148,7 @@ void Partitioner::partition()
     init_part();
     set_cutSize();
     init_gain();
+    //  std::cout<<_cellArray[0]->getNetList()[];
 }
 
 void Partitioner::printSummary() const
