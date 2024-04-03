@@ -187,49 +187,64 @@ void Partitioner::update_gain(int i)
 {
     vector<int> list = _cellArray[i]->getNetList();
     // check all nets
-    for (int i = 0; i < list.size(); i++)
+    for (int j = 0; j < list.size(); j++)
     {
-        vector<int> cells = _netArray[list[i]]->getCellList();
+        cout << _netArray[list[j]]->getName() << " " << _netArray[list[j]]->getPartCount(0) << " " << _netArray[list[j]]->getPartCount(1) << endl;
+        vector<int> cells = _netArray[list[j]]->getCellList();
 
         // cell[i] in A(0)
         if (!_cellArray[i]->getPart())
         {
             // T(n)=0
-            if (_netArray[list[i]]->getPartCount(1) == 0)
+            if (_netArray[list[j]]->getPartCount(1) == 0)
             {
-                for (int j = 0; j < cells.size(); j++)
+                cout << "T(n)=0" << endl;
+                for (int k = 0; k < cells.size(); k++)
                 {
-                    _cellArray[cells[j]]->incGain();
+                    _cellArray[cells[k]]->incGain();
+                    cout << _cellArray[cells[k]]->getName() << "++" << endl;
                 }
             }
             // T(n)=1
-            else if (_netArray[list[i]]->getPartCount(1) == 1)
+            else if (_netArray[list[j]]->getPartCount(1) == 1)
             {
-                for (int j = 0; j < cells.size(); j++)
+                cout << "T(n)=1" << endl;
+                for (int k = 0; k < cells.size(); k++)
                 {
-                    if (_cellArray[cells[j]]->getPart())
-                        _cellArray[cells[j]]->decGain();
+                    if (_cellArray[cells[k]]->getPart())
+                    {
+                        _cellArray[cells[k]]->decGain();
+                        cout << _cellArray[cells[k]]->getName() << "--" << endl;
+                    }
                 }
             }
             // lock cell[i]
             _cellArray[i]->lock();
-            _netArray[list[i]]->incPartCount(1);
-            _netArray[list[i]]->decPartCount(0);
+            _netArray[list[j]]->incPartCount(1);
+            _netArray[list[j]]->decPartCount(0);
             // F(n)=0
-            if (_netArray[list[i]]->getPartCount(0) == 0)
+
+            if (_netArray[list[j]]->getPartCount(0) == 0)
             {
-                for (int j = 0; j < cells.size(); j++)
+                cout << "F(n)=0" << endl;
+                for (int k = 0; k < cells.size(); k++)
                 {
-                    _cellArray[cells[j]]->decGain();
+                    _cellArray[cells[k]]->decGain();
+                    cout << _cellArray[cells[k]]->getName() << "--" << endl;
                 }
             }
             // F(n)=1
-            else if (_netArray[list[i]]->getPartCount(0) == 1)
+
+            else if (_netArray[list[j]]->getPartCount(0) == 1)
             {
-                for (int j = 0; j < cells.size(); j++)
+                cout << "F(n)=1" << endl;
+                for (int k = 0; k < cells.size(); k++)
                 {
-                    if (!_cellArray[cells[j]]->getPart())
-                        _cellArray[cells[j]]->incGain();
+                    if (!_cellArray[cells[k]]->getPart())
+                    {
+                        _cellArray[cells[k]]->incGain();
+                        cout << _cellArray[cells[k]]->getName() << "++" << endl;
+                    }
                 }
             }
         }
@@ -255,8 +270,8 @@ void Partitioner::update_gain(int i)
             }
             // lock cell[i]
             _cellArray[i]->lock();
-            _netArray[list[i]]->incPartCount(1);
-            _netArray[list[i]]->decPartCount(0);
+            _netArray[list[i]]->incPartCount(0);
+            _netArray[list[i]]->decPartCount(1);
             // F(n)=0
             if (_netArray[list[i]]->getPartCount(1) == 0)
             {
@@ -289,6 +304,8 @@ void Partitioner::partition()
     set_cutSize();
     init_gain();
     update_gain(1);
+    // cout << _netArray[3]->getPartCount(0) << endl;
+    // cout << _netArray[3]->getPartCount(1) << endl;
     //  std::cout<<_cellArray[0]->getNetList()[];
 }
 
