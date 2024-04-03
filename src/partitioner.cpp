@@ -186,6 +186,7 @@ void Partitioner::init_gain()
 void Partitioner::update_gain(int i)
 {
     vector<int> list = _cellArray[i]->getNetList();
+    _cellArray[i]->lock();
     // check all nets
     for (int j = 0; j < list.size(); j++)
     {
@@ -219,7 +220,7 @@ void Partitioner::update_gain(int i)
                 }
             }
             // lock cell[i]
-            _cellArray[i]->lock();
+
             _netArray[list[j]]->incPartCount(1);
             _netArray[list[j]]->decPartCount(0);
             // F(n)=0
@@ -252,41 +253,44 @@ void Partitioner::update_gain(int i)
         else
         {
             // T(n)=0
-            if (_netArray[list[i]]->getPartCount(0) == 0)
+            if (_netArray[list[j]]->getPartCount(0) == 0)
             {
-                for (int j = 0; j < cells.size(); j++)
+                cout << "T(n)=0" << endl;
+                for (int k = 0; k < cells.size(); k++)
                 {
-                    _cellArray[cells[j]]->incGain();
+                    _cellArray[cells[k]]->incGain();
                 }
             }
             // T(n)=1
-            else if (_netArray[list[i]]->getPartCount(0) == 1)
+            else if (_netArray[list[j]]->getPartCount(0) == 1)
             {
-                for (int j = 0; j < cells.size(); j++)
+                cout << "T(n)=1" << endl;
+                for (int k = 0; k < cells.size(); k++)
                 {
-                    if (!_cellArray[cells[j]]->getPart())
-                        _cellArray[cells[j]]->decGain();
+                    if (!_cellArray[cells[k]]->getPart())
+                        _cellArray[cells[k]]->decGain();
                 }
             }
             // lock cell[i]
-            _cellArray[i]->lock();
-            _netArray[list[i]]->incPartCount(0);
-            _netArray[list[i]]->decPartCount(1);
+            _netArray[list[j]]->incPartCount(0);
+            _netArray[list[j]]->decPartCount(1);
             // F(n)=0
-            if (_netArray[list[i]]->getPartCount(1) == 0)
+            if (_netArray[list[j]]->getPartCount(1) == 0)
             {
-                for (int j = 0; j < cells.size(); j++)
+                cout << "F(n)=0" << endl;
+                for (int k = 0; k < cells.size(); k++)
                 {
-                    _cellArray[cells[j]]->decGain();
+                    _cellArray[cells[k]]->decGain();
                 }
             }
             // F(n)=1
-            else if (_netArray[list[i]]->getPartCount(1) == 1)
+            else if (_netArray[list[j]]->getPartCount(1) == 1)
             {
-                for (int j = 0; j < cells.size(); j++)
+                cout << "F(n)=1" << endl;
+                for (int k = 0; k < cells.size(); k++)
                 {
-                    if (_cellArray[cells[j]]->getPart())
-                        _cellArray[cells[j]]->incGain();
+                    if (_cellArray[cells[k]]->getPart())
+                        _cellArray[cells[k]]->incGain();
                 }
             }
         }
@@ -303,7 +307,7 @@ void Partitioner::partition()
     init_part();
     set_cutSize();
     init_gain();
-    update_gain(1);
+    update_gain(5);
     // cout << _netArray[3]->getPartCount(0) << endl;
     // cout << _netArray[3]->getPartCount(1) << endl;
     //  std::cout<<_cellArray[0]->getNetList()[];
