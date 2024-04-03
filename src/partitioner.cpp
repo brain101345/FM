@@ -112,6 +112,8 @@ void Partitioner::add_cell(int i)
     cout << i << endl;
     map<int, Node *>::iterator itr;
     Node *node = _cellArray[i]->getNode();
+    node->setNext(nullptr);
+    node->setPrev(nullptr);
     if (!_cellArray[i]->getPart())
     {
         int gain = _cellArray[i]->getGain();
@@ -119,16 +121,12 @@ void Partitioner::add_cell(int i)
         if (itr == _bList[0].end())
         {
             _bList[0][gain] = node;
-            std::cout << "new";
         }
         else
         {
-            // (*itr).second->getNext()->setPrev(node);
-            // node->setNext((*itr).second->getNext());
             (*itr).second->setPrev(node);
             node->setNext((*itr).second);
             _bList[0][gain] = node;
-            std::cout << "old";
         }
     }
     else
@@ -138,16 +136,12 @@ void Partitioner::add_cell(int i)
         if (itr == _bList[1].end())
         {
             _bList[1][gain] = node;
-            std::cout << "new";
         }
         else
         {
-            // (*itr).second->getNext()->setPrev(node);
-            // node->setNext((*itr).second->getNext());
             (*itr).second->setPrev(node);
             node->setNext((*itr).second);
             _bList[0][gain] = node;
-            std::cout << "old";
         }
     }
 }
