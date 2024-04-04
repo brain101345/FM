@@ -180,13 +180,32 @@ void Partitioner::init_gain()
         }
         // add cell
         add_cell(i);
-        std::cout << _cellArray[i]->getName() << " " << _cellArray[i]->getGain() << " " << _cellArray[i]->getPinNum() << " " << _cellArray[i]->getPart() << endl;
+        // std::cout << _cellArray[i]->getName() << " " << _cellArray[i]->getGain() << " " << _cellArray[i]->getPinNum() << " " << _cellArray[i]->getPart() << endl;
     }
 }
 void Partitioner::update_gain(int i)
 {
     vector<int> list = _cellArray[i]->getNetList();
+    // lock cell and remove fron bList
     _cellArray[i]->lock();
+    Node *node = _cellArray[i]->getNode();
+    if(!node->getPrev()){
+        if(!node->getNext()){
+            _bList[_cellArray[i]->getPart()].erase(_cellArray[i]->getGain());
+        }else{
+            _bList[_cellArray[i]->getPart()][_cellArray[i]->getGain()] = node->getNext();
+            node->getNext()->setPrev(nullptr);
+        }
+    }else{
+        if(node->getNext()){
+            node->getPrev()->setNext(node->getNext());
+            node->getNext()->setPrev(node->getPrev());
+        }else{
+            node->getPrev()->setNext(nullptr);
+        }
+    }
+    node->setNext(nullptr);
+    node->setPrev(nullptr);
     // check all nets
     for (int j = 0; j < list.size(); j++)
     {
@@ -296,10 +315,10 @@ void Partitioner::update_gain(int i)
         }
     }
     // print gain
-    for (int i = 0; i < _cellArray.size(); i++)
-    {
-        std::cout << _cellArray[i]->getName() << " " << _cellArray[i]->getGain() << endl;
-    }
+    // for (int i = 0; i < _cellArray.size(); i++)
+    // {
+    //     std::cout << _cellArray[i]->getName() << " " << _cellArray[i]->getGain() << endl;
+    // }
 }
 void Partitioner::print_bList(int i){
     cout<<"bList "<<i<<endl;
@@ -322,9 +341,10 @@ void Partitioner::partition()
     init_part();
     set_cutSize();
     init_gain();
+    update_gain(0);
     print_bList(0);
     print_bList(1);
-    // update_gain(5);
+    
     // cout << _netArray[3]->getPartCount(0) << endl;
     // cout << _netArray[3]->getPartCount(1) << endl;
     //  std::cout<<_cellArray[0]->getNetList()[];
