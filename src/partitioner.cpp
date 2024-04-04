@@ -143,7 +143,7 @@ void Partitioner::add_cell(int i)
         {
             (*itr).second->setPrev(node);
             node->setNext((*itr).second);
-            _bList[0][gain] = node;
+            _bList[1][gain] = node;
         }
     }
 }
@@ -301,13 +301,30 @@ void Partitioner::update_gain(int i)
         std::cout << _cellArray[i]->getName() << " " << _cellArray[i]->getGain() << endl;
     }
 }
+void Partitioner::print_bList(int i){
+    cout<<"bList "<<i<<endl;
+    for(const auto& s : _bList[i]){
+        
+        cout<<s.first<<" ";
+        Node *next = s.second;
+        while (next)
+        {
+            cout<<_cellArray[next->getId()]->getName()<<" ";
+            next = next->getNext();
+        }
+        
+        cout<<endl;
+    }
+}
 void Partitioner::partition()
 {
     // initial partition
     init_part();
     set_cutSize();
     init_gain();
-    update_gain(5);
+    print_bList(0);
+    print_bList(1);
+    // update_gain(5);
     // cout << _netArray[3]->getPartCount(0) << endl;
     // cout << _netArray[3]->getPartCount(1) << endl;
     //  std::cout<<_cellArray[0]->getNetList()[];
