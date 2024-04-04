@@ -72,6 +72,8 @@ void Partitioner::parseInput(fstream &inFile)
 
 void Partitioner::init_part()
 {
+    max = (1+_bFactor)*_cellNum/2;
+    min = (1-_bFactor)*_cellNum/2;
     for (int i = 0; i < _cellNum; i++)
     {
         if (_cellArray[i]->getPinNum() > _maxPinNum)
@@ -121,6 +123,7 @@ void Partitioner::set_cutSize()
         if (_netArray[i]->getPartCount(0) > 0 && _netArray[i]->getPartCount(1) > 0)
             _cutSize++;
     }
+    // cout<<_cutSize<<endl;
 }
 void Partitioner::add_cell(int i)
 {
@@ -169,7 +172,7 @@ void Partitioner::remove_cell(int i){
     if(_cellArray[i]->getLock()){
         return;
     }
-    cout<<"remove "<<i<<endl;
+    // cout<<"remove "<<i<<endl;
     Node *node = _cellArray[i]->getNode();
     if(!node->getPrev()){
         if(!node->getNext()){
@@ -196,6 +199,8 @@ void Partitioner::init()
     // init history
     _accGain = 0;
     _maxAccGain = 0;
+    _moveNum = 0;
+    _bestMoveNum = 0;
     _moveStack.clear();
     // init b_list
     _bList[0].clear();
@@ -233,15 +238,21 @@ void Partitioner::init()
         // std::cout << _cellArray[i]->getName() << " " << _cellArray[i]->getGain() << " " << _cellArray[i]->getPinNum() << " " << _cellArray[i]->getPart() << endl;
     }
 }
-
 void Partitioner::update_gain(int i)
 {
+    if(_cellArray[i]->getLock()){
+        cout<<"Already locked, choose max is wrong"<<endl;
+    }
+    // cout<<"move "<<_cellArray[i]->getName()<<" gain "<<_cellArray[i]->getGain()<<endl;
     // update history
     _moveStack.push_back(i);
     _accGain += _cellArray[i]->getGain();
-    if(_accGain > _maxAccGain)
+    _moveNum ++;
+    if(_accGain > _maxAccGain){
         _maxAccGain = _accGain;
-    // remove fron bList and lock cell 
+        _bestMoveNum = _moveNum;
+    }
+    // remove from bList and lock cell 
     remove_cell(i);
     _cellArray[i]->lock();
     //  update partSize
@@ -257,7 +268,7 @@ void Partitioner::update_gain(int i)
     vector<int> list = _cellArray[i]->getNetList();
     for (int j = 0; j < list.size(); j++)
     {
-        cout << _netArray[list[j]]->getName() << " " << _netArray[list[j]]->getPartCount(0) << " " << _netArray[list[j]]->getPartCount(1) << endl;
+        // cout << _netArray[list[j]]->getName() << " " << _netArray[list[j]]->getPartCount(0) << " " << _netArray[list[j]]->getPartCount(1) << endl;
         vector<int> cells = _netArray[list[j]]->getCellList();
 
         // cell[i] in A(0)
@@ -266,19 +277,19 @@ void Partitioner::update_gain(int i)
             // T(n)=0
             if (_netArray[list[j]]->getPartCount(1) == 0)
             {
-                cout << "T(n)=0" << endl;
+                // cout << "T(n)=0" << endl;
                 for (int k = 0; k < cells.size(); k++)
                 {
                     remove_cell(cells[k]);
                     _cellArray[cells[k]]->incGain();
                     add_cell(cells[k]);
-                    cout << _cellArray[cells[k]]->getName() << "++" << endl;
+                    // cout << _cellArray[cells[k]]->getName() << "++" << endl;
                 }
             }
             // T(n)=1
             else if (_netArray[list[j]]->getPartCount(1) == 1)
             {
-                cout << "T(n)=1" << endl;
+                // cout << "T(n)=1" << endl;
                 for (int k = 0; k < cells.size(); k++)
                 {
                     if (_cellArray[cells[k]]->getPart())
@@ -286,7 +297,7 @@ void Partitioner::update_gain(int i)
                         remove_cell(cells[k]);
                         _cellArray[cells[k]]->decGain();
                         add_cell(cells[k]);
-                        cout << _cellArray[cells[k]]->getName() << "--" << endl;
+                        // cout << _cellArray[cells[k]]->getName() << "--" << endl;
                     }
                 }
             }
@@ -298,20 +309,20 @@ void Partitioner::update_gain(int i)
 
             if (_netArray[list[j]]->getPartCount(0) == 0)
             {
-                cout << "F(n)=0" << endl;
+                // cout << "F(n)=0" << endl;
                 for (int k = 0; k < cells.size(); k++)
                 {
                     remove_cell(cells[k]);
                     _cellArray[cells[k]]->decGain();
                     add_cell(cells[k]);
-                    cout << _cellArray[cells[k]]->getName() << "--" << endl;
+                    // cout << _cellArray[cells[k]]->getName() << "--" << endl;
                 }
             }
             // F(n)=1
 
             else if (_netArray[list[j]]->getPartCount(0) == 1)
             {
-                cout << "F(n)=1" << endl;
+                // cout << "F(n)=1" << endl;
                 for (int k = 0; k < cells.size(); k++)
                 {
                     if (!_cellArray[cells[k]]->getPart())
@@ -319,7 +330,7 @@ void Partitioner::update_gain(int i)
                         remove_cell(cells[k]);
                         _cellArray[cells[k]]->incGain();
                         add_cell(cells[k]);
-                        cout << _cellArray[cells[k]]->getName() << "++" << endl;
+                        // cout << _cellArray[cells[k]]->getName() << "++" << endl;
                     }
                 }
             }
@@ -330,7 +341,7 @@ void Partitioner::update_gain(int i)
             // T(n)=0
             if (_netArray[list[j]]->getPartCount(0) == 0)
             {
-                cout << "T(n)=0" << endl;
+                // cout << "T(n)=0" << endl;
                 for (int k = 0; k < cells.size(); k++)
                 {
                     remove_cell(cells[k]);
@@ -341,7 +352,7 @@ void Partitioner::update_gain(int i)
             // T(n)=1
             else if (_netArray[list[j]]->getPartCount(0) == 1)
             {
-                cout << "T(n)=1" << endl;
+                // cout << "T(n)=1" << endl;
                 for (int k = 0; k < cells.size(); k++)
                 {
                     if (!_cellArray[cells[k]]->getPart())
@@ -359,7 +370,7 @@ void Partitioner::update_gain(int i)
             // F(n)=0
             if (_netArray[list[j]]->getPartCount(1) == 0)
             {
-                cout << "F(n)=0" << endl;
+                // cout << "F(n)=0" << endl;
                 for (int k = 0; k < cells.size(); k++)
                 {
                     remove_cell(cells[k]);
@@ -370,7 +381,7 @@ void Partitioner::update_gain(int i)
             // F(n)=1
             else if (_netArray[list[j]]->getPartCount(1) == 1)
             {
-                cout << "F(n)=1" << endl;
+                // cout << "F(n)=1" << endl;
                 for (int k = 0; k < cells.size(); k++)
                 {
                     if (_cellArray[cells[k]]->getPart())
@@ -405,18 +416,83 @@ void Partitioner::print_bList(int i){
         cout<<endl;
     }
 }
-void Partitioner::choose_max(){
-
+int Partitioner::choose_max(){
+    map<int, Node *>::reverse_iterator itr0 = _bList[0].rbegin();
+    map<int, Node *>::reverse_iterator itr1 = _bList[1].rbegin();
+    if((_bList[0].empty())&&(_bList[1].empty())){
+        // cout<<"Both empty"<<endl;
+        return -1;
+    }
+    if(_bList[0].empty()){
+        if(_partSize[1]-1 <min){
+            // cout<<"A empty, B to small"<<endl;
+            return -1;
+        }
+        // cout<<"A empty"<<endl;
+        return (*itr1).second->getId();
+    }
+    if(_bList[1].empty()){
+        if(_partSize[0]-1 <min){
+            // cout<<"B empty, A to small"<<endl;
+            return -1;
+        }
+        // cout<<"B empty"<<endl;
+        return (*itr0).second->getId();
+    }
+    if(_partSize[0]-1 <min)
+    {
+        // cout<<"A to small"<<endl;
+        return (*itr1).second->getId();
+    }
+        
+    if(_partSize[1]-1 <min){
+        // cout<<"B to small"<<endl;
+        return (*itr0).second->getId();
+    }
+        
+    int gain0 = _cellArray[(*itr0).second->getId()]->getGain();
+    int gain1 = _cellArray[(*itr1).second->getId()]->getGain();
+    if(gain0>gain1)
+        return (*itr0).second->getId();
+    if(gain0<gain1)
+        return (*itr1).second->getId();
+    if(_partSize[0]>=_partSize[1])
+        return (*itr0).second->getId();
+    return (*itr1).second->getId();
 }
 void Partitioner::partition()
 {
     // initial partition
     init_part();
     init();
+
+    // partition
+    int iter = 0;
+    do
+    {
+        init();
+        while (1)
+        {
+            int index = choose_max();
+            
+            if(index < 0)
+                break;
+            // cout<<"move "<<_cellArray[index]->getName()<<" gain "<<_cellArray[index]->getGain()<<endl;
+            update_gain(index);
+        }
+        for(int i=0;i<_bestMoveNum;i++){
+            _cellArray[_moveStack[i]]->move();
+        }
+        cout<<"iter "<<iter<<" cutsize ";
+        set_cutSize();
+        iter++;
+    } while (_maxAccGain>0);
+    init();
+    // cout<<"iter "<<iter<<" cutsize ";
     set_cutSize();
-    update_gain(1);
-    print_bList(0);
-    print_bList(1);
+    init_size_and_count();
+    // print_bList(0);
+    // print_bList(1);
     
     // cout << _netArray[3]->getPartCount(0) << endl;
     // cout << _netArray[3]->getPartCount(1) << endl;

@@ -50,7 +50,7 @@ public:
     void remove_cell(int i);
     void update_gain(int i);
     void print_bList(int i);
-    void choose_max();
+    int choose_max();
 private:
     int _cutSize;                  // cut size
     //init
@@ -71,6 +71,7 @@ private:
     
     
     //no init
+    double max, min;
     int _netNum;                   // number of nets
     int _cellNum;                  // number of cells
     int _maxPinNum;                // Pmax for building bucket list
