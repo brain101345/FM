@@ -44,26 +44,19 @@ public:
     //
     void init_part();
     void set_cutSize();
-    void init_gain();
+    void init_size_and_count();
+    void init();
     void add_cell(int i);
     void remove_cell(int i);
     void update_gain(int i);
     void print_bList(int i);
-
+    void choose_max();
 private:
     int _cutSize;                  // cut size
+    //init
+    //partsize
     int _partSize[2];              // size (cell number) of partition A(0) and B(1)
-    int _netNum;                   // number of nets
-    int _cellNum;                  // number of cells
-    int _maxPinNum;                // Pmax for building bucket list
-    double _bFactor;               // the balance factor to be met
-    Node *_maxGainCell;            // pointer to max gain cell
-    vector<Net *> _netArray;       // net array of the circuit
-    vector<Cell *> _cellArray;     // cell array of the circuit
-    map<int, Node *> _bList[2];    // bucket list of partition A(0) and B(1)
-    map<string, int> _netName2Id;  // mapping from net name to id
-    map<string, int> _cellName2Id; // mapping from cell name to id
-
+    //history
     int _accGain;           // accumulative gain
     int _maxAccGain;        // maximum accumulative gain
     int _moveNum;           // number of cell movements
@@ -71,6 +64,23 @@ private:
     int _bestMoveNum;       // store best number of movements
     int _unlockNum[2];      // number of unlocked cells
     vector<int> _moveStack; // history of cell movement
+    //b_list
+    map<int, Node *> _bList[2];    // bucket list of partition A(0) and B(1)
+    // max_cell
+    Node *_maxGainCell;            // pointer to max gain cell
+    
+    
+    //no init
+    int _netNum;                   // number of nets
+    int _cellNum;                  // number of cells
+    int _maxPinNum;                // Pmax for building bucket list
+    double _bFactor;               // the balance factor to be met
+    vector<Net *> _netArray;       // net array of the circuit
+    vector<Cell *> _cellArray;     // cell array of the circuit
+    map<string, int> _netName2Id;  // mapping from net name to id
+    map<string, int> _cellName2Id; // mapping from cell name to id
+
+    
 
     // Clean up partitioner
     void clear();

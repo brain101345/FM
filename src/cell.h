@@ -26,6 +26,7 @@ public:
 
 private:
     int         _id;    // id of the node (indicating the cell)
+    //init
     Node*       _prev;  // pointer to the previous node
     Node*       _next;  // pointer to the next node
 };
@@ -67,10 +68,12 @@ public:
     void addNet(const int netId) { _netList.push_back(netId); }
 
 private:
+    //init
     int             _gain;      // gain of the cell
+    bool            _lock;      // whether the cell is locked
+    //no init
     int             _pinNum;    // number of pins the cell are connected to
     bool            _part;      // partition the cell belongs to (0-A, 1-B)
-    bool            _lock;      // whether the cell is locked
     Node*           _node;      // node used to link the cells together
     string          _name;      // name of the cell
     vector<int>     _netList;   // list of nets the cell is connected to

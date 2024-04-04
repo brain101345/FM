@@ -79,18 +79,33 @@ void Partitioner::init_part()
         if (i < _cellNum / 2)
         {
             _cellArray[i]->setPart(0);
+        }
+        else
+        {
+            _cellArray[i]->setPart(1);
+        }
+    }
+}
+void Partitioner::init_size_and_count(){
+    //reset size and count
+    _partSize[0] = 0;
+    _partSize[1] = 0;
+    for(int i = 0; i < _netNum; i++){
+        _netArray[i]->setPartCount(0,0);
+        _netArray[i]->setPartCount(1,0);
+    }
+    for(int i = 0; i < _cellNum; i++)
+    {
+        vector<int> list = _cellArray[i]->getNetList();
+        if(!_cellArray[i]->getPart()){
             _partSize[0]++;
-            vector<int> list = _cellArray[i]->getNetList();
             for (int j = 0; j < list.size(); j++)
             {
                 _netArray[list[j]]->incPartCount(0);
             }
         }
-        else
-        {
-            _cellArray[i]->setPart(1);
+        else{
             _partSize[1]++;
-            vector<int> list = _cellArray[i]->getNetList();
             for (int j = 0; j < list.size(); j++)
             {
                 _netArray[list[j]]->incPartCount(1);
@@ -174,11 +189,18 @@ void Partitioner::remove_cell(int i){
     node->setNext(nullptr);
     node->setPrev(nullptr);
 }
-void Partitioner::init_gain()
+void Partitioner::init()
 {
-    // clear b_list
+    //init part size and count
+    init_size_and_count();
+    // init history
+    _accGain = 0;
+    _maxAccGain = 0;
+    _moveStack.clear();
+    // init b_list
     _bList[0].clear();
     _bList[1].clear();
+    //init gain and lock
     // go through every cell
     for (int i = 0; i < _cellNum; i++)
     {
@@ -214,12 +236,25 @@ void Partitioner::init_gain()
 
 void Partitioner::update_gain(int i)
 {
-    vector<int> list = _cellArray[i]->getNetList();
+    // update history
+    _moveStack.push_back(i);
+    _accGain += _cellArray[i]->getGain();
+    if(_accGain > _maxAccGain)
+        _maxAccGain = _accGain;
     // remove fron bList and lock cell 
-    
     remove_cell(i);
     _cellArray[i]->lock();
+    //  update partSize
+    if(!_cellArray[i]->getPart()){
+        _partSize[0]-=1;
+        _partSize[1]+=1;
+    }else{
+        _partSize[0]+=1;
+        _partSize[1]-=1;
+    }
+     
     // check all nets
+    vector<int> list = _cellArray[i]->getNetList();
     for (int j = 0; j < list.size(); j++)
     {
         cout << _netArray[list[j]]->getName() << " " << _netArray[list[j]]->getPartCount(0) << " " << _netArray[list[j]]->getPartCount(1) << endl;
@@ -370,13 +405,16 @@ void Partitioner::print_bList(int i){
         cout<<endl;
     }
 }
+void Partitioner::choose_max(){
+
+}
 void Partitioner::partition()
 {
     // initial partition
     init_part();
+    init();
     set_cutSize();
-    init_gain();
-    update_gain(2);
+    update_gain(1);
     print_bList(0);
     print_bList(1);
     

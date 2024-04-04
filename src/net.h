@@ -29,7 +29,9 @@ public:
     void addCell(const int cellId)  { _cellList.push_back(cellId); }
 
 private:
+    //init
     int             _partCount[2];  // Cell number in partition A(0) and B(1)
+    //no init
     string          _name;          // Name of the net
     vector<int>     _cellList;      // List of cells the net is connected to
 };
