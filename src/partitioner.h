@@ -46,6 +46,7 @@ public:
     void set_cutSize();
     void init_gain();
     void add_cell(int i);
+    void remove_cell(int i);
     void update_gain(int i);
     void print_bList(int i);
 

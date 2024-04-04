@@ -109,6 +109,9 @@ void Partitioner::set_cutSize()
 }
 void Partitioner::add_cell(int i)
 {
+    if(_cellArray[i]->getLock()){
+        return;
+    }
     // cout << i << endl;
     map<int, Node *>::iterator itr;
     Node *node = _cellArray[i]->getNode();
@@ -147,6 +150,30 @@ void Partitioner::add_cell(int i)
         }
     }
 }
+void Partitioner::remove_cell(int i){
+    if(_cellArray[i]->getLock()){
+        return;
+    }
+    cout<<"remove "<<i<<endl;
+    Node *node = _cellArray[i]->getNode();
+    if(!node->getPrev()){
+        if(!node->getNext()){
+            _bList[_cellArray[i]->getPart()].erase(_cellArray[i]->getGain());
+        }else{
+            _bList[_cellArray[i]->getPart()][_cellArray[i]->getGain()] = node->getNext();
+            node->getNext()->setPrev(nullptr);
+        }
+    }else{
+        if(node->getNext()){
+            node->getPrev()->setNext(node->getNext());
+            node->getNext()->setPrev(node->getPrev());
+        }else{
+            node->getPrev()->setNext(nullptr);
+        }
+    }
+    node->setNext(nullptr);
+    node->setPrev(nullptr);
+}
 void Partitioner::init_gain()
 {
     // clear b_list
@@ -156,6 +183,7 @@ void Partitioner::init_gain()
     for (int i = 0; i < _cellNum; i++)
     {
         _cellArray[i]->setGain(0);
+        _cellArray[i]->unlock();
         vector<int> netlist = _cellArray[i]->getNetList();
         // calculate gain
         if (!_cellArray[i]->getPart())
@@ -183,29 +211,14 @@ void Partitioner::init_gain()
         // std::cout << _cellArray[i]->getName() << " " << _cellArray[i]->getGain() << " " << _cellArray[i]->getPinNum() << " " << _cellArray[i]->getPart() << endl;
     }
 }
+
 void Partitioner::update_gain(int i)
 {
     vector<int> list = _cellArray[i]->getNetList();
-    // lock cell and remove fron bList
+    // remove fron bList and lock cell 
+    
+    remove_cell(i);
     _cellArray[i]->lock();
-    Node *node = _cellArray[i]->getNode();
-    if(!node->getPrev()){
-        if(!node->getNext()){
-            _bList[_cellArray[i]->getPart()].erase(_cellArray[i]->getGain());
-        }else{
-            _bList[_cellArray[i]->getPart()][_cellArray[i]->getGain()] = node->getNext();
-            node->getNext()->setPrev(nullptr);
-        }
-    }else{
-        if(node->getNext()){
-            node->getPrev()->setNext(node->getNext());
-            node->getNext()->setPrev(node->getPrev());
-        }else{
-            node->getPrev()->setNext(nullptr);
-        }
-    }
-    node->setNext(nullptr);
-    node->setPrev(nullptr);
     // check all nets
     for (int j = 0; j < list.size(); j++)
     {
@@ -221,7 +234,9 @@ void Partitioner::update_gain(int i)
                 cout << "T(n)=0" << endl;
                 for (int k = 0; k < cells.size(); k++)
                 {
+                    remove_cell(cells[k]);
                     _cellArray[cells[k]]->incGain();
+                    add_cell(cells[k]);
                     cout << _cellArray[cells[k]]->getName() << "++" << endl;
                 }
             }
@@ -233,7 +248,9 @@ void Partitioner::update_gain(int i)
                 {
                     if (_cellArray[cells[k]]->getPart())
                     {
+                        remove_cell(cells[k]);
                         _cellArray[cells[k]]->decGain();
+                        add_cell(cells[k]);
                         cout << _cellArray[cells[k]]->getName() << "--" << endl;
                     }
                 }
@@ -249,7 +266,9 @@ void Partitioner::update_gain(int i)
                 cout << "F(n)=0" << endl;
                 for (int k = 0; k < cells.size(); k++)
                 {
+                    remove_cell(cells[k]);
                     _cellArray[cells[k]]->decGain();
+                    add_cell(cells[k]);
                     cout << _cellArray[cells[k]]->getName() << "--" << endl;
                 }
             }
@@ -262,7 +281,9 @@ void Partitioner::update_gain(int i)
                 {
                     if (!_cellArray[cells[k]]->getPart())
                     {
+                        remove_cell(cells[k]);
                         _cellArray[cells[k]]->incGain();
+                        add_cell(cells[k]);
                         cout << _cellArray[cells[k]]->getName() << "++" << endl;
                     }
                 }
@@ -277,7 +298,9 @@ void Partitioner::update_gain(int i)
                 cout << "T(n)=0" << endl;
                 for (int k = 0; k < cells.size(); k++)
                 {
+                    remove_cell(cells[k]);
                     _cellArray[cells[k]]->incGain();
+                    add_cell(cells[k]);
                 }
             }
             // T(n)=1
@@ -287,7 +310,12 @@ void Partitioner::update_gain(int i)
                 for (int k = 0; k < cells.size(); k++)
                 {
                     if (!_cellArray[cells[k]]->getPart())
+                    {
+                        remove_cell(cells[k]);
                         _cellArray[cells[k]]->decGain();
+                        add_cell(cells[k]);
+                    }
+                       
                 }
             }
             // lock cell[i]
@@ -299,7 +327,9 @@ void Partitioner::update_gain(int i)
                 cout << "F(n)=0" << endl;
                 for (int k = 0; k < cells.size(); k++)
                 {
+                    remove_cell(cells[k]);
                     _cellArray[cells[k]]->decGain();
+                    add_cell(cells[k]);
                 }
             }
             // F(n)=1
@@ -309,7 +339,12 @@ void Partitioner::update_gain(int i)
                 for (int k = 0; k < cells.size(); k++)
                 {
                     if (_cellArray[cells[k]]->getPart())
+                    {
+                        remove_cell(cells[k]);
                         _cellArray[cells[k]]->incGain();
+                        add_cell(cells[k]);
+                    }
+                        
                 }
             }
         }
@@ -341,7 +376,7 @@ void Partitioner::partition()
     init_part();
     set_cutSize();
     init_gain();
-    update_gain(0);
+    update_gain(2);
     print_bList(0);
     print_bList(1);
     
