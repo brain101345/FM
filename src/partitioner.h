@@ -43,6 +43,7 @@ public:
 
     //
     void init_part();
+    void init_part1();
     void set_cutSize();
     void init_size_and_count();
     void init();
@@ -71,7 +72,7 @@ private:
     
     
     //no init
-    double max, min;
+    double min;
     int _netNum;                   // number of nets
     int _cellNum;                  // number of cells
     int _maxPinNum;                // Pmax for building bucket list

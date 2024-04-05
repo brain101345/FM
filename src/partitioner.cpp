@@ -72,19 +72,29 @@ void Partitioner::parseInput(fstream &inFile)
 
 void Partitioner::init_part()
 {
-    max = (1+_bFactor)*_cellNum/2;
     min = (1-_bFactor)*_cellNum/2;
     for (int i = 0; i < _cellNum; i++)
     {
-        if (_cellArray[i]->getPinNum() > _maxPinNum)
-            _maxPinNum++;
-        if (i < _cellNum / 2)
-        {
-            _cellArray[i]->setPart(0);
-        }
-        else
+        // if (_cellArray[i]->getPinNum() > _maxPinNum)
+        //     _maxPinNum++;
+        if (i >= _cellNum / 2)
         {
             _cellArray[i]->setPart(1);
+        }
+    }
+}
+void Partitioner::init_part1(){
+    min = (1-_bFactor)*_cellNum/2;
+    int n = 0;
+    for(int i=0;i<_netNum;i++){
+        vector<int> list = _netArray[i]->getCellList();
+        for(int j=0;j<list.size();j++){
+            if(!_cellArray[list[j]]->getPart()){
+                n++;
+                _cellArray[list[j]]->move();
+            }
+            if (n>_cellNum/2)
+                return;   
         }
     }
 }
@@ -240,9 +250,9 @@ void Partitioner::init()
 }
 void Partitioner::update_gain(int i)
 {
-    if(_cellArray[i]->getLock()){
-        cout<<"Already locked, choose max is wrong"<<endl;
-    }
+    // if(_cellArray[i]->getLock()){
+    //     cout<<"Already locked, choose max is wrong"<<endl;
+    // }
     // cout<<"move "<<_cellArray[i]->getName()<<" gain "<<_cellArray[i]->getGain()<<endl;
     // update history
     _moveStack.push_back(i);
@@ -257,11 +267,11 @@ void Partitioner::update_gain(int i)
     _cellArray[i]->lock();
     //  update partSize
     if(!_cellArray[i]->getPart()){
-        _partSize[0]-=1;
-        _partSize[1]+=1;
+        _partSize[0]--;
+        _partSize[1]++;
     }else{
-        _partSize[0]+=1;
-        _partSize[1]-=1;
+        _partSize[0]++;
+        _partSize[1]--;
     }
      
     // check all nets
@@ -301,7 +311,6 @@ void Partitioner::update_gain(int i)
                     }
                 }
             }
-            // lock cell[i]
 
             _netArray[list[j]]->incPartCount(1);
             _netArray[list[j]]->decPartCount(0);
@@ -463,14 +472,18 @@ int Partitioner::choose_max(){
 void Partitioner::partition()
 {
     // initial partition
-    init_part();
+    init_part1();
     init();
-
+    //early stop
+    bool stop1 = false;
+    bool stop2 = false;
     // partition
-    int iter = 0;
-    do
+    // int iter = 0;
+    while (1)
     {
         init();
+        // cout<<"iter "<<iter<<" cutsize ";
+        // set_cutSize();
         while (1)
         {
             int index = choose_max();
@@ -480,23 +493,28 @@ void Partitioner::partition()
             // cout<<"move "<<_cellArray[index]->getName()<<" gain "<<_cellArray[index]->getGain()<<endl;
             update_gain(index);
         }
+        //stop
+        if(_maxAccGain<=0)
+            break;
+        //move cell
         for(int i=0;i<_bestMoveNum;i++){
             _cellArray[_moveStack[i]]->move();
         }
-        cout<<"iter "<<iter<<" cutsize ";
-        set_cutSize();
-        iter++;
-    } while (_maxAccGain>0);
-    init();
+        //early stop
+        if((_maxAccGain<3)&&stop1&&stop2)
+            break;
+        if((_maxAccGain<3)&&stop1)
+            stop2 = true;
+        if((_maxAccGain<3))
+            stop1 = true;
+        
+        // iter++;
+    } 
+    init_size_and_count();
     // cout<<"iter "<<iter<<" cutsize ";
     set_cutSize();
-    init_size_and_count();
     // print_bList(0);
     // print_bList(1);
-    
-    // cout << _netArray[3]->getPartCount(0) << endl;
-    // cout << _netArray[3]->getPartCount(1) << endl;
-    //  std::cout<<_cellArray[0]->getNetList()[];
 }
 
 void Partitioner::printSummary() const
