@@ -44,6 +44,7 @@ public:
     //
     void init_part();
     void init_part1();
+    void init_part2();
     void set_cutSize();
     void init_size_and_count();
     void init();

@@ -98,6 +98,21 @@ void Partitioner::init_part1(){
         }
     }
 }
+void Partitioner::init_part2(){
+    min = (1-_bFactor)*_cellNum/2;
+    int n = 0;
+    int index;
+    vector<int> c;
+    init();
+    for(int i=0;i<_cellNum/2;i++){
+        index = choose_max();
+        c.push_back(index);
+        update_gain(index);
+    }
+    for(int i=0;i<c.size();i++){
+        _cellArray[c[i]]->move();
+    }
+}
 void Partitioner::init_size_and_count(){
     //reset size and count
     _partSize[0] = 0;
@@ -250,10 +265,6 @@ void Partitioner::init()
 }
 void Partitioner::update_gain(int i)
 {
-    // if(_cellArray[i]->getLock()){
-    //     cout<<"Already locked, choose max is wrong"<<endl;
-    // }
-    // cout<<"move "<<_cellArray[i]->getName()<<" gain "<<_cellArray[i]->getGain()<<endl;
     // update history
     _moveStack.push_back(i);
     _accGain += _cellArray[i]->getGain();
@@ -311,7 +322,6 @@ void Partitioner::update_gain(int i)
                     }
                 }
             }
-
             _netArray[list[j]]->incPartCount(1);
             _netArray[list[j]]->decPartCount(0);
             // F(n)=0
@@ -469,25 +479,22 @@ int Partitioner::choose_max(){
         return (*itr0).second->getId();
     return (*itr1).second->getId();
 }
-void Partitioner::partition()
-{
+void Partitioner::partition(){
     // initial partition
     init_part1();
     init();
     //early stop
+    int minGain = 5;
     bool stop1 = false;
     bool stop2 = false;
     // partition
-    // int iter = 0;
-    while (1)
-    {
+    int iter = 0;
+    while (1){
         init();
         // cout<<"iter "<<iter<<" cutsize ";
         // set_cutSize();
-        while (1)
-        {
-            int index = choose_max();
-            
+        while (1){
+            int index = choose_max();                       
             if(index < 0)
                 break;
             // cout<<"move "<<_cellArray[index]->getName()<<" gain "<<_cellArray[index]->getGain()<<endl;
@@ -500,21 +507,22 @@ void Partitioner::partition()
         for(int i=0;i<_bestMoveNum;i++){
             _cellArray[_moveStack[i]]->move();
         }
-        //early stop
-        if((_maxAccGain<3)&&stop1&&stop2)
+        iter++;
+        // early stop
+        if((_maxAccGain<minGain)&&stop1&&stop2)
             break;
-        if((_maxAccGain<3)&&stop1)
+        else if((_maxAccGain<minGain)&&stop1)
             stop2 = true;
-        if((_maxAccGain<3))
-            stop1 = true;
-        
-        // iter++;
+        else if((_maxAccGain<minGain))
+            stop1 = true;     
+        else{
+            stop1 = false;     
+            stop2 = false;
+        }        
     } 
     init_size_and_count();
     // cout<<"iter "<<iter<<" cutsize ";
     set_cutSize();
-    // print_bList(0);
-    // print_bList(1);
 }
 
 void Partitioner::printSummary() const
