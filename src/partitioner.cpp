@@ -483,12 +483,8 @@ void Partitioner::partition(){
     // initial partition
     init_part1();
     init();
-    //early stop
-    int minGain = 5;
-    bool stop1 = false;
-    bool stop2 = false;
     // partition
-    int iter = 0;
+    // int iter = 0;
     while (1){
         init();
         // cout<<"iter "<<iter<<" cutsize ";
@@ -507,18 +503,7 @@ void Partitioner::partition(){
         for(int i=0;i<_bestMoveNum;i++){
             _cellArray[_moveStack[i]]->move();
         }
-        iter++;
-        // early stop
-        if((_maxAccGain<minGain)&&stop1&&stop2)
-            break;
-        else if((_maxAccGain<minGain)&&stop1)
-            stop2 = true;
-        else if((_maxAccGain<minGain))
-            stop1 = true;     
-        else{
-            stop1 = false;     
-            stop2 = false;
-        }        
+        // iter++;
     } 
     init_size_and_count();
     // cout<<"iter "<<iter<<" cutsize ";
