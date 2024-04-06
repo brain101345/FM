@@ -482,7 +482,6 @@ int Partitioner::choose_max(){
 void Partitioner::partition(){
     // initial partition
     init_part1();
-    init();
     // partition
     // int iter = 0;
     while (1){
